@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>复制 Eagle 路径</title>
+<style>
+  :root {
+    --fg: #e6e8ec; --fg-dim: #9aa3ae; --fg-mute: #6b7480;
+    --panel: #22262d; --line: rgba(255,255,255,.14); --field: rgba(0,0,0,.28);
+    --btn: #3b414a; --btn-hi: #474e58; --ok: #6fd3a7; --err: #e07a6a;
+  }
+  body[theme="LIGHT"], body[theme="LIGHTGRAY"] {
+    --fg: #1f2329; --fg-dim: #5b6470; --fg-mute: #8a929c;
+    --panel: #f6f7f9; --line: rgba(0,0,0,.14); --field: rgba(255,255,255,.9);
+    --btn: #e3e7ec; --btn-hi: #d4d9df; --ok: #1f8f5f; --err: #c0503f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    background: var(--panel); color: var(--fg); border: 1px solid var(--line);
+    border-radius: 10px; padding: 12px 14px;
+    font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    font-size: 12px; line-height: 1.45;
+    display: flex; flex-direction: column; gap: 8px; user-select: none;
+  }
+  #head { display: flex; align-items: center; gap: 8px; }
+  #ttl { flex: 1 1 auto; color: var(--fg-dim); font-size: 11px; letter-spacing: .3px; }
+  #badge { font-size: 11px; color: var(--fg-mute); }
+  #badge.ok { color: var(--ok); }
+  #badge.err { color: var(--err); }
+  #path {
+    flex: 1 1 auto; min-height: 34px; max-height: 62px; overflow: auto;
+    padding: 7px 9px; border: 1px solid var(--line); border-radius: 6px;
+    background: var(--field); color: var(--fg); font-size: 12.5px;
+    white-space: pre-wrap; word-break: break-all; user-select: text; cursor: text;
+  }
+  #path:empty { color: var(--fg-mute); }
+  #foot { display: flex; align-items: center; gap: 6px; }
+  #hint { flex: 1 1 auto; font-size: 10.5px; color: var(--fg-mute); }
+  button {
+    flex: 0 0 auto; padding: 4px 9px; border: none; border-radius: 5px;
+    background: var(--btn); color: var(--fg); font: inherit; font-size: 11px; cursor: pointer;
+  }
+  button:hover { background: var(--btn-hi); }
+</style>
+</head>
+<body>
+  <div id="head">
+    <span id="ttl">Eagle 路径</span>
+    <span id="badge">读取中…</span>
+  </div>
+  <div id="path"></div>
+  <div id="foot">
+    <span id="hint">Ctrl+Alt+Shift+P 再次触发</span>
+    <button id="pin">保持显示</button>
+    <button id="close">关闭</button>
+  </div>
+
+  <script src="js/core.js"></script>
+  <script src="js/action.js"></script>
+</body>
+</html>

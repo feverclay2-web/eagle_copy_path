@@ -1,12 +1,27 @@
 {
   "id": "eagle-copy-path",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "platform": "all",
   "arch": "all",
   "name": "复制 Eagle 路径",
   "logo": "/logo.png",
   "keywords": ["path", "copy", "folder", "路径", "文件夹", "复制"],
+  "shortcut": "CmdOrCtrl+Alt+Shift+P",
   "devTools": false,
+  "main": {
+    "url": "action.html",
+    "width": 330,
+    "height": 146,
+    "frame": false,
+    "alwaysOnTop": true,
+    "resizable": false,
+    "fullscreenable": false,
+    "maximizable": false,
+    "childWindow": true,
+    "followCursor": true,
+    "multiple": false,
+    "backgroundColor": "#22262d"
+  },
   "preview": {
     "jpg,jpeg,png,gif,webp,bmp,tif,tiff,svg,heic,heif,avif,ico,apng,psd,ai,eps,tga,raw,cr2,nef,arw,dng,mp4,mov,webm,mkv,avi,m4v,flv,wmv,mpg,mpeg,ts,m2ts,mts,3gp,ogv,mxf": {
       "inspector": {
