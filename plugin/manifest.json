@@ -1,0 +1,19 @@
+{
+  "id": "eagle-copy-path",
+  "version": "1.0.0",
+  "platform": "all",
+  "arch": "all",
+  "name": "复制 Eagle 路径",
+  "logo": "/logo.png",
+  "keywords": ["path", "copy", "folder", "路径", "文件夹", "复制"],
+  "devTools": false,
+  "preview": {
+    "jpg,jpeg,png,gif,webp,bmp,tif,tiff,svg,heic,heif,avif,ico,apng,psd,ai,eps,tga,raw,cr2,nef,arw,dng,mp4,mov,webm,mkv,avi,m4v,flv,wmv,mpg,mpeg,ts,m2ts,mts,3gp,ogv,mxf": {
+      "inspector": {
+        "path": "index.html",
+        "height": 122,
+        "multiSelect": true
+      }
+    }
+  }
+}

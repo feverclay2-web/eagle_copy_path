@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>复制 Eagle 路径</title>
+<style>
+  :root {
+    --fg: #e6e8ec; --fg-dim: #9aa3ae; --fg-mute: #6b7480;
+    --panel: rgba(255,255,255,.045); --line: rgba(255,255,255,.11);
+    --btn: #3b414a; --btn-hi: #474e58;
+    --accent: #3a6ea5; --accent-hi: #4a82bd;
+    --ok: #6fd3a7; --err: #e07a6a;
+    --sheet: #22262d; --field: rgba(0,0,0,.28);
+  }
+  body[theme="LIGHT"], body[theme="LIGHTGRAY"] {
+    --fg: #1f2329; --fg-dim: #5b6470; --fg-mute: #8a929c;
+    --panel: rgba(0,0,0,.035); --line: rgba(0,0,0,.12);
+    --btn: #e3e7ec; --btn-hi: #d4d9df;
+    --accent: #2f6fb0; --accent-hi: #3a80c6;
+    --ok: #1f8f5f; --err: #c0503f;
+    --sheet: #f6f7f9; --field: rgba(255,255,255,.9);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    position: relative; background: transparent; color: var(--fg);
+    font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    font-size: 12px; line-height: 1.4; padding: 8px 10px;
+    display: flex; flex-direction: column; gap: 6px; user-select: none;
+  }
+
+  #head { display: flex; align-items: center; gap: 6px; min-height: 16px; }
+  #title { flex: 1 1 auto; color: var(--fg-dim); font-size: 11px; letter-spacing: .3px; }
+  #gear {
+    flex: 0 0 auto; background: none; border: none; color: var(--fg-dim);
+    cursor: pointer; font-size: 13px; line-height: 1; padding: 0 2px;
+  }
+  #gear:hover { color: var(--fg); }
+
+  #prevRow { display: flex; align-items: center; gap: 5px; min-height: 30px; }
+  #preview {
+    flex: 1 1 auto; min-width: 0; padding: 6px 8px; border: 1px solid var(--line);
+    border-radius: 6px; background: var(--panel); color: var(--fg); font-size: 12px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    user-select: text; cursor: text;
+  }
+  #preview.empty { color: var(--fg-mute); }
+  #folderPick {
+    display: none; flex: 0 0 84px; min-width: 0; padding: 5px 4px; font: inherit; font-size: 11px;
+    border: 1px solid var(--line); border-radius: 6px; background: var(--field); color: var(--fg);
+  }
+  #folderPick.show { display: block; }
+
+  #copy {
+    width: 100%; padding: 8px 0; border: none; border-radius: 7px;
+    background: var(--accent); color: #fff; font-size: 13px; font-weight: 500;
+    letter-spacing: .3px; cursor: pointer; transition: background .12s;
+  }
+  #copy:hover { background: var(--accent-hi); }
+  #copy.ok { background: var(--ok); color: #10281e; }
+  #copy:disabled { background: var(--btn); color: var(--fg-mute); cursor: not-allowed; }
+
+  #status {
+    font-size: 11px; color: var(--fg-dim); min-height: 15px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  #status.ok { color: var(--ok); }
+  #status.err { color: var(--err); }
+
+  #settings {
+    position: absolute; inset: 0; z-index: 5; display: none; flex-direction: column;
+    gap: 5px; padding: 9px 10px; background: var(--sheet); border-radius: 6px;
+  }
+  #settings.show { display: flex; }
+  #settings .srow { display: flex; align-items: center; gap: 6px; color: var(--fg-dim); font-size: 11.5px; }
+  #settings .srow > span:first-child { flex: 0 0 48px; }
+  #settings select {
+    flex: 1 1 auto; min-width: 0; padding: 3px 5px; font: inherit; font-size: 11.5px;
+    border: 1px solid var(--line); border-radius: 5px; background: var(--field); color: var(--fg);
+  }
+  #settings label { display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--fg-dim); font-size: 11.5px; }
+  #settings label:hover { color: var(--fg); }
+  #settings input[type="checkbox"] { accent-color: var(--accent); }
+  #settings .hint { flex: 1 1 auto; min-width: 0; font-size: 10.5px; color: var(--fg-mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #close {
+    flex: 0 0 auto; padding: 3px 10px; border: none; border-radius: 5px;
+    background: var(--btn); color: var(--fg); font: inherit; font-size: 11.5px; cursor: pointer;
+  }
+  #close:hover { background: var(--btn-hi); }
+</style>
+</head>
+<body>
+  <div id="head">
+    <span id="title">Eagle 路径</span>
+    <button id="gear" title="格式设置">⚙</button>
+  </div>
+
+  <div id="prevRow">
+    <div id="preview" class="empty" title="">读取中…</div>
+    <select id="folderPick" title="该素材归属多个文件夹，选择要复制的那条路径"></select>
+  </div>
+
+  <button id="copy" disabled>复制 Eagle 路径</button>
+  <div id="status">选中图片或视频后可用</div>
+
+  <div id="settings">
+    <div class="srow">
+      <span>分隔符</span>
+      <select id="sep">
+        <option value=" \ ">空格 \ 空格（默认）</option>
+        <option value="\">\</option>
+        <option value="/">/</option>
+        <option value=" &gt; "> &gt; </option>
+        <option value=" → "> → </option>
+      </select>
+    </div>
+    <label><input type="checkbox" id="withName"> 末尾追加文件名</label>
+    <label><input type="checkbox" id="withExt"> 文件名带扩展名</label>
+    <div class="srow">
+      <span class="hint" id="sample"></span>
+      <button id="close">完成</button>
+    </div>
+  </div>
+
+  <script src="js/plugin.js"></script>
+</body>
+</html>
