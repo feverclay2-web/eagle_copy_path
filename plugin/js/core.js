@@ -6,14 +6,22 @@
   'use strict';
 
   var CFG_KEY = 'eagle-copy-path:cfg';
-  var DEFAULTS = { sep: ' \\ ', withName: false, withExt: true };
+  var CFG_SCHEMA = 2;
+  // 选中文件默认带文件名；选中文件夹只输出文件夹链（folderLines 不传 item）
+  var DEFAULTS = { sep: ' \\ ', withName: true, withExt: true, schema: CFG_SCHEMA };
 
   function loadCfg() {
-    try {
-      return Object.assign({}, DEFAULTS, JSON.parse(localStorage.getItem(CFG_KEY) || '{}'));
-    } catch (e) {
-      return Object.assign({}, DEFAULTS);
+    var raw = {};
+    try { raw = JSON.parse(localStorage.getItem(CFG_KEY) || '{}') || {}; } catch (e) {}
+    var cfg = Object.assign({}, DEFAULTS, raw);
+    // v1.0 / v1.1 持久化过「不带文件名」，升级一次并写回，避免旧值盖掉新默认；
+    // 之后用户自己改的开关会带 schema:2，不会再被重置。
+    if (raw.schema !== CFG_SCHEMA) {
+      cfg.withName = true;
+      cfg.schema = CFG_SCHEMA;
+      saveCfg(cfg);
     }
+    return cfg;
   }
 
   function saveCfg(cfg) {

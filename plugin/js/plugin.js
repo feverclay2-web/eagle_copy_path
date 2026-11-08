@@ -37,9 +37,10 @@
   }
 
   function sampleText() {
-    var parts = ['根目录', '子目录', '三级目录'];
-    if (cfg.withName) parts.push('文件名' + (cfg.withExt ? '.jpg' : ''));
-    return '示例  ' + parts.join(cfg.sep);
+    var chain = ['根目录', '子目录'].join(cfg.sep);
+    var name = '素材' + (cfg.withExt ? '.jpg' : '');
+    return '文件    ' + (cfg.withName ? chain + cfg.sep + name : chain)
+      + '\n文件夹  ' + chain;
   }
 
   function syncSettingsUI() {
@@ -86,7 +87,8 @@
       el.folderPick.classList.remove('show');
     }
 
-    el.title.textContent = r.kind === 'folders' ? 'Eagle 路径 · 文件夹' : 'Eagle 路径';
+    el.title.textContent = r.kind === 'folders' ? 'Eagle 路径 · 文件夹'
+      : (r.kind === 'items' ? 'Eagle 路径 · 文件' : 'Eagle 路径');
 
     if (r.lines.length) {
       el.preview.textContent = r.lines[0];
@@ -101,9 +103,9 @@
     if (r.kind === 'folders') {
       setStatus('文件夹 · ' + st.folders.length + ' 个 · 将复制 ' + r.lines.length + ' 条路径（已去重）');
     } else if (st.items.length > 1) {
-      setStatus('选中 ' + st.items.length + ' 个素材 · 将复制 ' + r.lines.length + ' 条路径（已去重）');
+      setStatus('选中 ' + st.items.length + ' 个文件 · 将复制 ' + r.lines.length + ' 条路径（已去重）');
     } else if (r.lines.length) {
-      setStatus('就绪 · ' + (r.chains[0] || []).length + ' 级文件夹路径');
+      setStatus('文件 · ' + (r.chains[0] || []).length + ' 级路径' + (cfg.withName ? ' + 文件名' : ''));
     } else {
       setStatus('未选中素材或文件夹，无法生成路径', 'err');
     }

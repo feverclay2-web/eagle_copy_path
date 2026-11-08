@@ -51,7 +51,7 @@
           manualPick: false,
           activeFolder: 0
         });
-        kind = '素材';
+        kind = '文件';
       } else if (sel.folders.length) {
         r = await ECP.folderLines(sel.folders, idx, cfg);
         kind = '文件夹';
@@ -67,7 +67,7 @@
         var text = r.lines.join('\n');
         await ECP.copy(text);
         showResult('已复制 · ' + kind + (r.lines.length > 1 ? ' · ' + r.lines.length + ' 条' : ''), text, 'ok');
-        el.ttl.textContent = kind === '文件夹' ? 'Eagle 路径 · 文件夹' : 'Eagle 路径 · 素材';
+        el.ttl.textContent = kind === '文件夹' ? 'Eagle 路径 · 文件夹' : 'Eagle 路径 · 文件';
       }
     } catch (e) {
       showResult('复制失败', (e && e.message ? e.message : String(e)), 'err');
