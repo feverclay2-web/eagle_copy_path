@@ -152,6 +152,34 @@
     return { lines: dedupe(lines), chains: chains, variants: [] };
   }
 
+  // 一次算出两种结果，供「复制文件路径 / 复制文件夹路径」两个按钮使用。
+  // file  = 文件夹链 + 文件名；folder = 仅文件夹链。
+  // 选中文件夹时没有「文件名」概念，file 置空，只留 folder。
+  async function describe(sel, idx, o) {
+    var base = o.cfg;
+    function withName(v) { return Object.assign({}, base, { withName: v }); }
+
+    var out = {
+      kind: 'none',
+      file: { lines: [], chains: [], variants: [], activeIdx: 0 },
+      folder: { lines: [], chains: [], variants: [], activeIdx: 0 },
+      variants: [],
+      activeIdx: 0
+    };
+
+    if (sel.items && sel.items.length) {
+      out.kind = 'items';
+      out.file = await itemLines(sel.items, idx, Object.assign({}, o, { cfg: withName(true) }));
+      out.folder = await itemLines(sel.items, idx, Object.assign({}, o, { cfg: withName(false) }));
+      out.variants = (out.file && out.file.variants) || [];
+      out.activeIdx = (out.file && out.file.activeIdx) || 0;
+    } else if (sel.folders && sel.folders.length) {
+      out.kind = 'folders';
+      out.folder = await folderLines(sel.folders, idx, base);
+    }
+    return out;
+  }
+
   // 写入剪贴板并读回校验，不报假成功
   async function copy(text) {
     await eagle.clipboard.writeText(text);
@@ -172,6 +200,7 @@
     getSelection: getSelection,
     itemLines: itemLines,
     folderLines: folderLines,
+    describe: describe,
     copy: copy
   };
 })(typeof window !== 'undefined' ? window : globalThis);

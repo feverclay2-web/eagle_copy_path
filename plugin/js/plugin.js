@@ -1,6 +1,7 @@
 /*
  * 复制 Eagle 路径 — Inspector 面板（右侧检查器）
- * 选中图片/视频时显示；若 Eagle 保留了面板，选中文件夹时同样可用。
+ * 选中图片/视频时显示两行路径（文件 / 所在文件夹）和两个复制按钮。
+ * 选中文件夹时（若 Eagle 保留面板）只显示文件夹路径与单个按钮。
  */
 (function () {
   'use strict';
@@ -8,7 +9,8 @@
   if (!window.ECP) { console.error('[eagle-copy-path] core.js 未加载'); return; }
   var ECP = window.ECP;
   var cfg = ECP.loadCfg();
-  var COPY_LABEL = '复制 Eagle 路径';
+  var LABEL_FILE = '复制文件路径';
+  var LABEL_FOLDER = '复制文件夹路径';
 
   var el = {};
   var inited = false;
@@ -26,8 +28,9 @@
 
   // ---------- 界面 ----------
   function grab() {
-    ['title', 'gear', 'preview', 'folderPick', 'copy', 'status', 'settings', 'sep', 'withName',
-      'withExt', 'sample', 'close'].forEach(function (id) { el[id] = document.getElementById(id); });
+    ['title', 'gear', 'rFile', 'rFolder', 'rowFile', 'rowFolder', 'folderPick',
+      'copyFile', 'copyFolder', 'status', 'settings', 'sep', 'withExt', 'sample', 'close'
+    ].forEach(function (id) { el[id] = document.getElementById(id); });
   }
 
   function setStatus(text, kind) {
@@ -36,78 +39,94 @@
     el.status.title = text;
   }
 
+  function setRow(node, text, placeholder) {
+    if (text) {
+      node.textContent = text;
+      node.classList.remove('empty');
+    } else {
+      node.textContent = placeholder || '—';
+      node.classList.add('empty');
+    }
+    node.title = text || '';
+  }
+
   function sampleText() {
     var chain = ['根目录', '子目录'].join(cfg.sep);
     var name = '素材' + (cfg.withExt ? '.jpg' : '');
-    return '文件    ' + (cfg.withName ? chain + cfg.sep + name : chain)
-      + '\n文件夹  ' + chain;
+    return '文件    ' + chain + cfg.sep + name + '\n文件夹  ' + chain;
   }
 
   function syncSettingsUI() {
     el.sep.value = cfg.sep;
-    el.withName.checked = !!cfg.withName;
     el.withExt.checked = !!cfg.withExt;
     el.sample.textContent = sampleText();
   }
 
-  async function compute(items, folders, idx) {
-    if (items.length) {
-      var r = await ECP.itemLines(items, idx, {
-        cfg: cfg,
-        selId: st.selId,
-        manualPick: st.manualPick,
-        activeFolder: st.activeFolder
-      });
-      st.activeFolder = r.activeIdx;
-      return { kind: 'items', lines: r.lines, chains: r.chains, variants: r.variants, activeIdx: r.activeIdx };
-    }
-    if (folders.length) {
-      var f = await ECP.folderLines(folders, idx, cfg);
-      return { kind: 'folders', lines: f.lines, chains: f.chains, variants: [], activeIdx: 0 };
-    }
-    return { kind: 'none', lines: [], chains: [], variants: [], activeIdx: 0 };
+  function opts() {
+    return {
+      cfg: cfg,
+      selId: st.selId,
+      manualPick: st.manualPick,
+      activeFolder: st.activeFolder
+    };
   }
 
   async function render() {
     if (!st.idx) return;
-    var r = await compute(st.items, st.folders, st.idx);
+    var r = await ECP.describe({ items: st.items, folders: st.folders }, st.idx, opts());
+    st.activeFolder = r.activeIdx || 0;
 
     // 素材归属多个文件夹时给下拉，默认跟随左侧当前选中的文件夹
-    if (r.variants.length > 1) {
+    var variants = r.variants || [];
+    if (variants.length > 1) {
       el.folderPick.innerHTML = '';
-      r.variants.forEach(function (c, i) {
+      variants.forEach(function (c, i) {
         var o = document.createElement('option');
         o.value = String(i);
         o.textContent = (i + 1) + '. ' + (c.join(cfg.sep) || '（未归入文件夹）');
         el.folderPick.appendChild(o);
       });
-      el.folderPick.value = String(r.activeIdx);
+      el.folderPick.value = String(r.activeIdx || 0);
       el.folderPick.classList.add('show');
     } else {
       el.folderPick.classList.remove('show');
     }
 
-    el.title.textContent = r.kind === 'folders' ? 'Eagle 路径 · 文件夹'
-      : (r.kind === 'items' ? 'Eagle 路径 · 文件' : 'Eagle 路径');
+    var isItems = r.kind === 'items';
+    var isFolder = r.kind === 'folders';
 
-    if (r.lines.length) {
-      el.preview.textContent = r.lines[0];
-      el.preview.classList.remove('empty');
-    } else {
-      el.preview.textContent = st.items.length ? '（未归入任何文件夹）' : '未选中素材或文件夹';
-      el.preview.classList.add('empty');
-    }
-    el.preview.title = r.lines.join('\n');
+    el.title.textContent = isFolder ? 'Eagle 路径 · 文件夹'
+      : (isItems ? 'Eagle 路径 · 文件' : 'Eagle 路径');
 
-    el.copy.disabled = r.lines.length === 0;
-    if (r.kind === 'folders') {
-      setStatus('文件夹 · ' + st.folders.length + ' 个 · 将复制 ' + r.lines.length + ' 条路径（已去重）');
-    } else if (st.items.length > 1) {
-      setStatus('选中 ' + st.items.length + ' 个文件 · 将复制 ' + r.lines.length + ' 条路径（已去重）');
-    } else if (r.lines.length) {
-      setStatus('文件 · ' + (r.chains[0] || []).length + ' 级路径' + (cfg.withName ? ' + 文件名' : ''));
+    el.rFile.classList.toggle('hide', !isItems);
+    if (isItems) setRow(el.rowFile, r.file.lines[0], '（未归入任何文件夹）');
+
+    el.rFolder.classList.toggle('hide', !(isItems || isFolder));
+    if (isItems) setRow(el.rowFolder, r.folder.lines[0], '（未归入任何文件夹）');
+    else if (isFolder) setRow(el.rowFolder, r.folder.lines[0], '—');
+
+    var hasFile = isItems && r.file.lines.length > 0;
+    var hasFolder = (isItems || isFolder) && r.folder.lines.length > 0;
+
+    el.copyFile.classList.toggle('hide', !isItems);
+    el.copyFile.classList.toggle('primary', isItems);
+    el.copyFile.disabled = !hasFile;
+
+    el.copyFolder.classList.toggle('solo', !isItems);
+    el.copyFolder.classList.toggle('primary', !isItems);
+    el.copyFolder.disabled = !hasFolder;
+
+    if (isFolder) {
+      setStatus('文件夹 · ' + st.folders.length + ' 个 · 复制 ' + r.folder.lines.length + ' 条路径（已去重）');
+    } else if (isItems && st.items.length > 1) {
+      setStatus('选中 ' + st.items.length + ' 个文件 · 文件 ' + r.file.lines.length
+        + ' 条 / 文件夹 ' + r.folder.lines.length + ' 条');
+    } else if (isItems && r.file.lines.length) {
+      setStatus('文件 · ' + (r.file.chains[0] || []).length + ' 级路径');
+    } else if (isItems) {
+      setStatus('该素材未归入任何文件夹', 'err');
     } else {
-      setStatus('未选中素材或文件夹，无法生成路径', 'err');
+      setStatus('选中素材或文件夹后可用');
     }
   }
 
@@ -119,7 +138,7 @@
     var sig = sel.items.map(function (i) {
       return i.id + ':' + (i.folders || []).join(',');
     }).join('|') + '||' + sel.folders.map(function (f) { return f.id; }).join(',')
-      + '#' + cfg.sep + cfg.withName + cfg.withExt;
+      + '#' + cfg.sep + cfg.withExt;
 
     if (sig === st.sig) return;
     st.sig = sig;
@@ -133,7 +152,8 @@
   }
 
   function bind() {
-    el.copy.addEventListener('click', doCopy);
+    el.copyFile.addEventListener('click', function () { doCopy('file'); });
+    el.copyFolder.addEventListener('click', function () { doCopy('folder'); });
 
     el.gear.addEventListener('click', function () {
       syncSettingsUI();
@@ -148,9 +168,6 @@
     el.sep.addEventListener('change', function () {
       cfg.sep = el.sep.value; ECP.saveCfg(cfg); updateSample(); st.sig = ''; refresh();
     });
-    el.withName.addEventListener('change', function () {
-      cfg.withName = el.withName.checked; ECP.saveCfg(cfg); updateSample(); st.sig = ''; refresh();
-    });
     el.withExt.addEventListener('change', function () {
       cfg.withExt = el.withExt.checked; ECP.saveCfg(cfg); updateSample(); st.sig = ''; refresh();
     });
@@ -163,26 +180,35 @@
   }
 
   // ---------- 复制 ----------
-  async function doCopy() {
+  async function doCopy(which) {
     if (st.busy) return;
     st.busy = true;
     clearTimeout(st.timer);
+
+    var btn = which === 'file' ? el.copyFile : el.copyFolder;
+    var label = which === 'file' ? LABEL_FILE : LABEL_FOLDER;
+
     try {
       // 不依赖轮询缓存：按按钮时重新读一次当前选中
       var sel = await ECP.getSelection();
       var idx = await ECP.buildIndex();
-      var r = await compute(sel.items, sel.folders, idx);
-      if (!r.lines.length) { flash('未选中素材或文件夹'); return; }
+      var r = await ECP.describe(sel, idx, opts());
+      var lines = (which === 'file' ? r.file : r.folder).lines;
 
-      var text = r.lines.join('\n');
+      if (!lines.length) {
+        flash(which === 'file' ? '没有可复制的文件路径' : '没有可复制的文件夹路径');
+        return;
+      }
+
+      var text = lines.join('\n');
       await ECP.copy(text);
 
-      el.copy.textContent = '已复制 ✓';
-      el.copy.classList.add('ok');
-      setStatus('已复制：' + text.replace(/\n/g, '  |  '), 'ok');
+      btn.textContent = '已复制 ✓';
+      btn.classList.add('ok');
+      setStatus('已复制 · ' + text.replace(/\n/g, '  |  '), 'ok');
       st.timer = setTimeout(function () {
-        el.copy.textContent = COPY_LABEL;
-        el.copy.classList.remove('ok');
+        btn.textContent = label;
+        btn.classList.remove('ok');
       }, 1800);
     } catch (e) {
       flash('复制失败：' + (e && e.message ? e.message : String(e)));

@@ -1,6 +1,6 @@
 {
   "id": "eagle-copy-path",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "platform": "all",
   "arch": "all",
   "name": "复制 Eagle 路径",
@@ -10,8 +10,8 @@
   "devTools": false,
   "main": {
     "url": "action.html",
-    "width": 330,
-    "height": 146,
+    "width": 366,
+    "height": 226,
     "frame": false,
     "alwaysOnTop": true,
     "resizable": false,
@@ -26,7 +26,7 @@
     "jpg,jpeg,png,gif,webp,bmp,tif,tiff,svg,heic,heif,avif,ico,apng,psd,ai,eps,tga,raw,cr2,nef,arw,dng,mp4,mov,webm,mkv,avi,m4v,flv,wmv,mpg,mpeg,ts,m2ts,mts,3gp,ogv,mxf": {
       "inspector": {
         "path": "index.html",
-        "height": 122,
+        "height": 136,
         "multiSelect": true
       }
     }
